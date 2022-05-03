@@ -40,7 +40,7 @@ void NetworkBalancer::Start()
         if(bind(m_Socket, (struct sockaddr *)&m_addressIn, sizeof(m_addressIn)) == -1)
             throw runtime_error("Error in binding");
 
-        while(1)
+        while(true)
         {
             int res = recvfrom(m_Socket, m_Buff, sizeof(m_Buff), 0, 0, 0);
             auto timeNow = chrono::steady_clock::now();
