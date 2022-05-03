@@ -12,6 +12,10 @@ set(SOURCE_FILES
         src/main.cpp
         src/networkbalancer.h
         src/networkbalancer.cpp
+        src/configsgetter.h
+        src/configsgetter.cpp
+        src/tinyxml2/tinyxml2.h
+        src/tinyxml2/tinyxml2.cpp
         )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
