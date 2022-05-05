@@ -5,6 +5,8 @@ NetworkBalancer::NetworkBalancer()
 {
     m_initialized= false;
     m_Socket = -1;
+    m_BuffSize = 1024;
+    m_Buff.resize(m_BuffSize);
 }
 
 NetworkBalancer::~NetworkBalancer()
@@ -40,25 +42,34 @@ void NetworkBalancer::Start()
         if(bind(m_Socket, (struct sockaddr *)&m_addressIn, sizeof(m_addressIn)) == -1)
             throw runtime_error("Error in binding");
 
-        while(true)
+        while(1)
         {
-            int res = recvfrom(m_Socket, m_Buff, sizeof(m_Buff), 0, 0, 0);
-            auto timeNow = chrono::steady_clock::now();
-            auto diff = timeNow - queueOfTimes.front();
-            while (!queueOfTimes.empty() && chrono::duration_cast<chrono::microseconds>(diff).count() > 1000000)
+            int res = recvfrom(m_Socket, m_Buff.data(),m_BuffSize, MSG_TRUNC, 0, 0);
+            if(res > m_BuffSize)
             {
-                queueOfTimes.pop();
-                diff = timeNow  - queueOfTimes.front();
+                cerr << "Error! Resived data is large then size of buffer\n";
+
             }
-            if (queueOfTimes.size() < m_mSec)
+           else if(res > 0 && res <= m_BuffSize)
             {
-                sockaddr_in sentToAddress = m_addressesOut[m_addrNum];
-                auto sendRes = sendto(m_Socket, m_Buff, res, 0, (struct sockaddr*)(&sentToAddress), sizeof(sentToAddress));
-                auto sendTime = chrono::steady_clock::now();
-                if(sendRes != -1)
-                    queueOfTimes.push(sendTime);
-                ++m_addrNum;
-                m_addrNum %= m_addressesOut.size();
+
+                auto timeNow = chrono::steady_clock::now();
+                auto diff = timeNow - queueOfTimes.front();
+                while (!queueOfTimes.empty() && chrono::duration_cast<chrono::microseconds>(diff).count() > 1000000)
+                {
+                    queueOfTimes.pop();
+                    diff = timeNow  - queueOfTimes.front();
+                }
+                if (queueOfTimes.size() < m_mSec)
+                {
+                    sockaddr_in sentToAddress = m_addressesOut[m_addrNum];
+                    auto sendRes = sendto(m_Socket, m_Buff.data(), res, 0, (struct sockaddr*)(&sentToAddress), sizeof(sentToAddress));
+                    auto sendTime = chrono::steady_clock::now();
+                    if(sendRes != -1)
+                        queueOfTimes.push(sendTime);
+                    ++m_addrNum;
+                    m_addrNum %= m_addressesOut.size();
+                }
             }
         }
     }

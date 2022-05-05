@@ -32,7 +32,8 @@ private:
     sockaddr_in m_addressIn;
     vector<sockaddr_in>m_addressesOut;
     int m_Socket;
-    char m_Buff[1000];
+    vector <char> m_Buff;
+    int m_BuffSize;
     queue <chrono::steady_clock::time_point> queueOfTimes;
     int m_addrNum;
 
